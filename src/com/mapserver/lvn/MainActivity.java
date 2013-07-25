@@ -8,6 +8,11 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.TextView;
 
+/**
+ * メインアクティビティクラス        
+ * @author Ryuichi Tanaka
+ * @since 0.0.1
+ */
 public class MainActivity extends Activity {
     /** ロケーション */
     private LocationController location;
@@ -23,14 +28,6 @@ public class MainActivity extends Activity {
         LocationManager manager = (LocationManager) getSystemService(LOCATION_SERVICE);
         location = new LocationController(manager);
         location.setActivity(this);
-        
-        
-        // ためす
-//        VoiceTalker tts = new VoiceTalker(this);
-//        tts.speak("ゆるゆり");
-//        Log.d("lvn", "ゆるゆり");
-
-    
     }
     
     @Override
@@ -64,12 +61,18 @@ public class MainActivity extends Activity {
         text.setText("⊂(・∀・)⊃ﾔｯT！");
         
         // TODO 横向きにすると音が止まる
-        voiceTalker.speak("もくてきちまであとよんひゃくじゅういちめーとるです");
+        //voiceTalker.speak("もくてきちまであとよんひゃくじゅういちめーとるです");
         //voiceTalker.speak("げんざいちはとうきょうといたばしくみなみときわだいです");
         
         ReverseGeocoding geo = new ReverseGeocoding(this);
-        geo.setLng(139.68867458);
-        geo.setLat(35.75514038);
-        geo.execute();
+        geo.execute("139.68867458", "35.75514038");
+    }
+    
+    /**
+     * 逆ジオコーディングのコールバック
+     * @param text ひらがな表記の住所
+     */
+    public void onConvertAddress(String text) {
+        voiceTalker.speak("げんざいちは" + text + "ですう");
     }
 }

@@ -1,83 +1,75 @@
 package com.mapserver.lvn;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.InputStream;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
-import android.content.Context;
+import android.app.Activity;
 import android.net.Uri;
-import android.net.Uri.Builder;
-import android.net.http.AndroidHttpClient;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.TextView;
 
-public class ReverseGeocoding extends AsyncTask<Uri.Builder, Void, String> {
-    /** API URL */
-    private static final String HOST = "reverse.search.olp.yahooapis.jp";
-    private static final String PATH = "OpenLocalPlatform/V1/reverseGeoCoder";
+public class ReverseGeocoding extends AsyncTask<String, Void, String> {
     /** UserAgent */
     private static final String UA = "Mozilla/5.0 (Linux; U; Android 4.0.1; ja-jp; Galaxy Nexus Build/ITL41D) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
-    /** コンテキスト */
-    private Context context;
-    /** 軽度 */
-    private String lng;
-    /** 緯度 */
-    private String lat;
+    /** View */
+    private Activity activity;
+    
+    private String appid;
+    
+    private String address;
+    private String addressHiragana;
     
     /**
      * コンストラクタ
-     * @param lng 軽度
+     * @param lng 経度
      * @param lat 緯度
      */
-    public ReverseGeocoding(Context context) {
-        this.context = context;
+    public ReverseGeocoding(Activity activity) {
+        appid = "";
+        this.activity = activity;
     }
     
-    public void setLng(double lng) {
-        this.lng = String.valueOf(lng);
+    /**
+     * 緯度経度をdouble型で指定して実行する
+     * @param lng 経度
+     * @param lat 緯度
+     */
+    protected void execute(double lng, double lat) {
+        execute(String.valueOf(lng), String.valueOf(lat));
     }
     
-    public void setLat(double lat) {
-        this.lat = String.valueOf(lat);
-    }
-    
-    private String convert() {
-        return null;
-    }
-    
-    protected void execute() {
-        // TODO あとで隠す
-        String appid = "";
-        
-        
+    /**
+     * 住所を取得する
+     * @param String リクエストパラメータ
+     * @return 住所
+     */
+    private String getAddress(String lng, String lat) {
         Uri.Builder builder = new Uri.Builder();
         builder.scheme("http")
-               .encodedAuthority(HOST)
-               .path(PATH)
+               .encodedAuthority("reverse.search.olp.yahooapis.jp")
+               .path("OpenLocalPlatform/V1/reverseGeoCoder")
                .appendQueryParameter("appid", appid)
                .appendQueryParameter("lat", lat)
                .appendQueryParameter("lon", lng)
                .appendQueryParameter("output", "json");
         
-        execute(builder);
-    }
-    
-    /**
-     * 住所を取得する
-     * @param builder リクエストパラメータ
-     * @return 住所
-     */
-    private String getAddress(Uri.Builder builder) {
         HttpGet request = new HttpGet(builder.build().toString());
+        request.setHeader("Connection", "Keep-Alive");
+        request.setHeader("UserAgent", UA);
+        
         // DefaultHttpClientでないとCookieが使えないなど不具合が多い
         DefaultHttpClient httpClient = new DefaultHttpClient();
         String address = null;
@@ -90,6 +82,8 @@ public class ReverseGeocoding extends AsyncTask<Uri.Builder, Void, String> {
                           .getJSONObject("Property")
                           .get("Address")
                           .toString();
+            // 半角数字を漢数字に置換
+            address = LvnUtils.toKanji(address);
         }
         catch (IOException e) {
             Log.d("lvn", e.getMessage());
@@ -100,20 +94,107 @@ public class ReverseGeocoding extends AsyncTask<Uri.Builder, Void, String> {
         catch (JSONException e) {
             Log.d("lvn", e.getMessage());
         }
+        finally {
+            httpClient.getConnectionManager().shutdown();
+        }
         
         return address;
     }
+    
+    /**
+     * 漢字表記の住所をひらがなに変換する
+     * @param text 漢字を含む住所
+     * @return ひらがな(ただし町名以降の丁目は含まない)
+     * @throws IOException
+     */
+    private String getAddressHiragana(String text) throws IOException {
+        Uri.Builder builder = new Uri.Builder();
+        builder.scheme("http")
+               .encodedAuthority("jlp.yahooapis.jp")
+               .path("FuriganaService/V1/furigana")
+               .appendQueryParameter("appid", appid)
+               .appendQueryParameter("sentence", text)
+               .appendQueryParameter("grade", "1");
+        
+        HttpGet request = new HttpGet(builder.build().toString());
+        request.setHeader("Connection", "Keep-Alive");
+        request.setHeader("UserAgent", UA);
+        
+        // DefaultHttpClientでないとCookieが使えないなど不具合が多い
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        StringBuilder sb = new StringBuilder();
+        InputStream is = null;
+        try {
+            HttpResponse response = httpClient.execute(request);
+            String xmlText = EntityUtils.toString(response.getEntity(), "UTF-8");
+            is = new ByteArrayInputStream(xmlText.getBytes());
+            
+            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+            factory.setNamespaceAware(true);
+            XmlPullParser xpp = factory.newPullParser();
+            xpp.setInput(is, "UTF-8");
+            
+            int eventType = xpp.getEventType();
+            while (eventType != XmlPullParser.END_DOCUMENT) {
+                // 対象のタグを見つけたとき
+                if (eventType == XmlPullParser.START_TAG && "Furigana".equals(xpp.getName())) {
+                    // 要素を取得
+                    if (xpp.next() == XmlPullParser.TEXT) {
+                        sb.append(xpp.getText());
+                    }
+                }
+                eventType = xpp.next();
+            }
+        }
+        catch (IOException e) {
+            Log.d("lvn", e.getMessage());
+        }
+        catch (ParseException e) {
+            Log.d("lvn", e.getMessage());
+        }
+        catch (XmlPullParserException e) {
+            Log.d("lvn", "owata");
+            Log.d("lvn", e.getMessage());
+        }
+        finally {
+            is.close();
+            httpClient.getConnectionManager().shutdown();
+        }
+        
+        return sb.toString();
+    }
+    
+    /**
+     * Activityに結果を表示する(デバッグ用？)
+     * @param id 要素ID
+     * @param text 表示するテキスト
+     */
+    private void showResult(int id, String text) {
+        if (activity != null) {
+            TextView elem = (TextView) activity.findViewById(id);
+            elem.setText(text);
+        }
+    }
 
     @Override
-    protected String doInBackground(Builder... builder) {
-        return getAddress(builder[0]);
+    protected String doInBackground(String... query) {
+        try {
+            // 住所を取得
+            address = getAddress(query[0], query[1]);
+            // ひらがなに変換
+            addressHiragana = getAddressHiragana(address);
+        }
+        catch (IOException e) {
+            Log.e("lvn", e.getMessage());
+        }
+        
+        return addressHiragana;
     }
     
     @Override
     protected void onPostExecute(String result) {
-        // TODO
-        Log.d("lvn", result);
+        showResult(R.id.showAddress, address);
+        showResult(R.id.showAddressHiragana, addressHiragana);
+        ((MainActivity) activity).onConvertAddress(result);
     }
-    
-    
 }

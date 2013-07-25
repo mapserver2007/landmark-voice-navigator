@@ -63,8 +63,13 @@ public class MainActivity extends Activity {
         // TODO 以下の処理は本番では使わないのであとで消す。
         text.setText("⊂(・∀・)⊃ﾔｯT！");
         
+        // TODO 横向きにすると音が止まる
+        voiceTalker.speak("もくてきちまであとよんひゃくじゅういちめーとるです");
+        //voiceTalker.speak("げんざいちはとうきょうといたばしくみなみときわだいです");
         
-        voiceTalker.speak("ゆりゆららららゆるゆりだいじけん");
-        
+        ReverseGeocoding geo = new ReverseGeocoding(this);
+        geo.setLng(139.68867458);
+        geo.setLat(35.75514038);
+        geo.execute();
     }
 }

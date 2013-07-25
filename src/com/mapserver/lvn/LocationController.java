@@ -20,7 +20,7 @@ public class LocationController implements LocationListener {
     
     public void update() {
         // TODO 距離の設定は画面上から取れるようにする
-        manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0, this);
+        manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 0, this);
     }
     
     public void remove() {

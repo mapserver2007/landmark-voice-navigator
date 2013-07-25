@@ -32,13 +32,16 @@ public class VoiceTalker implements AudioTrack.OnPlaybackPositionUpdateListener 
     /** Aquestalkオブジェクト */
     private AquesTalk2 aquestalk;
     
+    /**
+     * コンストラクタ
+     */
     public VoiceTalker(Context context) {
         this.context = context;
         audioTrack();
     }
     
     /**
-     * コンストラクタ
+     * 音声系初期処理
      */
     private void audioTrack() {
         // 音声データバッファサイズ
@@ -82,8 +85,6 @@ public class VoiceTalker implements AudioTrack.OnPlaybackPositionUpdateListener 
             // setNotificationMarkerPosition()では、無音区間を含まない長さを指定。
             // これで、setNotificationMarkerPosition()のコールバックでstop()が遅延しても、ゴミが出力されない。
             byte[] b = new byte[length + SPACER];
-            Log.d("lvn", String.valueOf(wav.length));
-            Log.d("lvn", String.valueOf(length));
             System.arraycopy(wav, 44, b, 0, length);
             Arrays.fill(b, length, length + SPACER, (byte)0);
             

@@ -12,6 +12,10 @@ import android.util.Log;
 import android.widget.Toast;
 import aquestalk2.AquesTalk2;
 
+/**
+ * 音声を再生するクラス
+ * @author mapserver2007
+ */
 public class VoiceTalker implements AudioTrack.OnPlaybackPositionUpdateListener {
     /** wavファイルヘッダ長 */
     private static final int WAV_HEAD_LENGTH = 44;
@@ -22,8 +26,6 @@ public class VoiceTalker implements AudioTrack.OnPlaybackPositionUpdateListener 
     
     /** コンテキスト */
     private Context context;
-    /** 音声データバッファサイズ */
-    //private int phont;
     private int bufferSize;
     /** オーディオデータ */
     private AudioTrack track;
@@ -55,17 +57,10 @@ public class VoiceTalker implements AudioTrack.OnPlaybackPositionUpdateListener 
     }
     
     /**
-     * 音声データ名を設定する
-     * @param phont 音声データ名
+     * 音声を再生する
+     * @param text 再生する文字列(ひらがなのみ)
      */
-//    public void setPhont(int phont) {
-//        this.phont = phont;
-//    }
-
-    
     public void speak(String text) {
-        // TODO マジックナンバーなおす
-        stop();
         // 音声合成
         byte[] wav = aquestalk.syntheWav(text, 100, loadPhont());
         // エラーかどうか判定
@@ -96,15 +91,19 @@ public class VoiceTalker implements AudioTrack.OnPlaybackPositionUpdateListener 
             track.reloadStaticData();
             // バッファに書き込む
             // 無音区間を含めて書きこむ
+            //track.setNotificationMarkerPosition(length / 2);
             track.write(b, 0, length + SPACER);
-            // 指定の長さの再生が終わってもstatusが「PLAYING」なので指定位置の再生後にコールバックを実行する
-            // 16bitデータなのでサンプル数は1/2
-            track.setNotificationMarkerPosition(length / 2);
             // 再生
             track.play();
+            // setNotificationMarkerPositionによるコールバックが効かないので、
+            // 再生直後にステータスを書き換える
+            stop();
         }
     }
     
+    /**
+     * 音声再生を停止する
+     */
     public void stop() {
         if (track.getPlayState() == AudioTrack.PLAYSTATE_PLAYING){
             track.stop(); // 発声中なら停止
@@ -118,11 +117,6 @@ public class VoiceTalker implements AudioTrack.OnPlaybackPositionUpdateListener 
         track.release();
     }
     
-    
-    
-    
-    
-    
     /**
      * 音声データを読み込む
      * @return 音声データ
@@ -130,9 +124,9 @@ public class VoiceTalker implements AudioTrack.OnPlaybackPositionUpdateListener 
     private byte[] loadPhont() {
         try {
             // リソースIDを取得
-            String packageName = context.getResources().getResourcePackageName(R.raw.aq_robo);
-            String typeName = context.getResources().getResourceTypeName(R.raw.aq_robo);
-            int resourceId = context.getResources().getIdentifier("aq_robo", typeName, packageName);
+            String packageName = context.getResources().getResourcePackageName(R.raw.aq_yukkuri);
+            String typeName = context.getResources().getResourceTypeName(R.raw.aq_yukkuri);
+            int resourceId = context.getResources().getIdentifier("aq_yukkuri", typeName, packageName);
             if (resourceId == 0) {
                 return null;
             }
@@ -150,15 +144,8 @@ public class VoiceTalker implements AudioTrack.OnPlaybackPositionUpdateListener 
     }
 
     @Override
-    public void onMarkerReached(AudioTrack arg0) {
-        // TODO 自動生成されたメソッド・スタブ
-    }
-    
-    /**
-     * 再生完了時のコールバック
-     */
+    public void onMarkerReached(AudioTrack track) {}
+
     @Override
-    public void onPeriodicNotification(AudioTrack track) {
-        stop();
-    }
+    public void onPeriodicNotification(AudioTrack track) {}
 }

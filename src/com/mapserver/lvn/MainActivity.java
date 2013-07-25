@@ -61,10 +61,10 @@ public class MainActivity extends Activity {
     public void onCurrentLocation(View view) {
         TextView text = (TextView) findViewById(R.id.textView1);
         // TODO 以下の処理は本番では使わないのであとで消す。
-        text.setText("kita-");
+        text.setText("⊂(・∀・)⊃ﾔｯT！");
         
         
-        voiceTalker.speak("みかしーゆかちんつだちゃんるみるみ");
+        voiceTalker.speak("ゆりゆららららゆるゆりだいじけん");
         
     }
 }

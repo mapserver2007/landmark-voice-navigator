@@ -1,12 +1,5 @@
 package com.mapserver.lvn;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import android.annotation.SuppressLint;
 
 /**
  * ユーティリティクラス
@@ -18,6 +11,29 @@ public class LvnUtils {
     private static final String[] nList = {
         "一", "二", "三", "四", "五", "六", "七", "八", "九"
     };
+    
+    /**
+     * 丁目以降を削除する
+     * @param text 住所
+     * @return 丁目以降を削除した住所
+     */
+    public static String deleteStreet(String text) {
+        // 0-9の置換を実行
+        StringBuilder sb = new StringBuilder();
+        String chunk = null;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c >= '０' && c <= '９') {
+                break;
+            }
+            else {
+                chunk = String.valueOf(c);
+            }
+            sb.append(chunk);
+        }
+        
+        return sb.toString();
+    }
     
     /**
      * テキストに含まれる全角数字を漢数字に置き換える

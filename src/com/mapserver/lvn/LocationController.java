@@ -5,7 +5,6 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.TextView;
 
 public class LocationController implements LocationListener {
@@ -13,31 +12,45 @@ public class LocationController implements LocationListener {
     private LocationManager manager;
     /** View */
     private Activity activity;
+    /** ロケーション情報 */
+    private LocationBean location;
     
-    public LocationController(LocationManager manager) {
-        this.manager = manager;
+    public LocationController(Activity activity) {
+        this.activity = activity;
+        location = new LocationBean();
+        manager = (LocationManager) activity.getSystemService(Activity.LOCATION_SERVICE);
+        update();
     }
     
     public void update() {
-        // TODO 距離の設定は画面上から取れるようにする
+        // 10秒＋100m
         manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 0, this);
     }
     
     public void remove() {
         manager.removeUpdates(this);
     }
-
+    
+    public LocationBean getLocation() {
+        return location;
+    }
+    
+    /**
+     * 位置情報が変化したら実行されるコールバック
+     * @param location ロケーションオブジェクト
+     */
     @Override
     public void onLocationChanged(Location location) {
+        this.location.setLng(location.getLongitude());
+        this.location.setLat(location.getLatitude());
+        
         if (activity != null) {
             TextView lng = (TextView) activity.findViewById(R.id.showLongitude),
                      lat = (TextView) activity.findViewById(R.id.showLatitude);
-            
             lng.setText(String.valueOf(location.getLongitude()));
             lat.setText(String.valueOf(location.getLatitude()));
-            
-            Log.i("sparhawk", String.valueOf(location.getLongitude()));
-            Log.i("sparhawk", String.valueOf(location.getLatitude()));
+            // Activityに取得した位置情報を返す
+            ((MainActivity) activity).onLocationChanged(this.location);
         }
     }
 
@@ -59,7 +72,5 @@ public class LocationController implements LocationListener {
         
     }
     
-    public void setActivity(Activity activity) {
-        this.activity = activity;
-    }
+
 }

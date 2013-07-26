@@ -23,8 +23,8 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="36dp"
-        android:onClick="onCurrentLocation"
-        android:text="debug" />
+        android:onClick="onSpeak"
+        android:text="@string/button_speak" />
 
     <TextView
         android:id="@+id/textView2"
@@ -96,5 +96,15 @@
         android:layout_alignBottom="@+id/showAddressHiragana"
         android:layout_alignLeft="@+id/textView4"
         android:text="hiragana" />
+
+    <CheckBox
+        android:id="@+id/auto_speaking"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/textView1"
+        android:layout_alignRight="@+id/textView1"
+        android:layout_below="@+id/textView1"
+        android:onClick="onAutoSpeakingCheck"
+        android:text="Auto speaking" />
 
 </RelativeLayout>

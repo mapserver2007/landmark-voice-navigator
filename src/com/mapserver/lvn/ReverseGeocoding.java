@@ -83,7 +83,7 @@ public class ReverseGeocoding extends AsyncTask<String, Void, String> {
                           .get("Address")
                           .toString();
             // 半角数字を漢数字に置換
-            address = LvnUtils.toKanji(address);
+            address = LvnUtils.deleteStreet(address);
         }
         catch (IOException e) {
             Log.d("lvn", e.getMessage());
@@ -165,7 +165,7 @@ public class ReverseGeocoding extends AsyncTask<String, Void, String> {
     }
     
     /**
-     * Activityに結果を表示する(デバッグ用？)
+     * Activityに結果を表示する
      * @param id 要素ID
      * @param text 表示するテキスト
      */
@@ -195,6 +195,5 @@ public class ReverseGeocoding extends AsyncTask<String, Void, String> {
     protected void onPostExecute(String result) {
         showResult(R.id.showAddress, address);
         showResult(R.id.showAddressHiragana, addressHiragana);
-        ((MainActivity) activity).onConvertAddress(result);
     }
 }

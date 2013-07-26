@@ -1,11 +1,12 @@
 package com.mapserver.lvn;
 
 import android.app.Activity;
-import android.location.LocationManager;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.TextView;
 
 /**
@@ -21,13 +22,55 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        voiceTalker = new VoiceTalker(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // 音声再生
+        CheckBox cb = (CheckBox) findViewById(R.id.auto_speaking);
+        voiceTalker = new VoiceTalker(this);
+        voiceTalker.setAutoSpeak(cb.isChecked());
         // 位置情報を取得
-        LocationManager manager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        location = new LocationController(manager);
-        location.setActivity(this);
+        location = new LocationController(this);
+    }
+    
+    /**
+     * 位置情報が変化したときの処理
+     * @param location 位置情報
+     */
+    public void onLocationChanged(LocationBean location) {
+        String prevSpeakText = getSpeakText();
+        // デバッグ
+        ReverseGeocoding geo = new ReverseGeocoding(this);
+        geo.execute(location.getLng(), location.getLat());
+        // 自動発話
+        if (prevSpeakText != getSpeakText()) {
+            voiceTalker.autoSpeak("げんざいちわ" + getSpeakText() + "ですう");
+        }
+    }
+    
+    /**
+     * 自動発話設定を更新
+     * @param view ビューオブジェクト
+     */
+    public void onAutoSpeakingCheck(View view) {
+        CheckBox cb = (CheckBox) findViewById(R.id.auto_speaking);
+        voiceTalker.setAutoSpeak(cb.isChecked());
+    }
+    
+    /**
+     * しゃべります
+     * @param view ビューオブジェクト
+     */
+    public void onSpeak(View view) {
+        voiceTalker.speak("げんざいちわ" + getSpeakText() + "ですう");
+    }
+    
+    /**
+     * 発話するテキストを取得する
+     * @return 発話テキスト
+     */
+    private String getSpeakText() {
+        TextView textView = (TextView) findViewById(R.id.showAddressHiragana);
+        return textView.getText().toString();
     }
     
     @Override
@@ -45,6 +88,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        location.remove();
         voiceTalker.destroy();
     }
 
@@ -55,24 +99,13 @@ public class MainActivity extends Activity {
         return true;
     }
     
-    public void onCurrentLocation(View view) {
-        TextView text = (TextView) findViewById(R.id.textView1);
-        // TODO 以下の処理は本番では使わないのであとで消す。
-        text.setText("⊂(・∀・)⊃ﾔｯT！");
-        
-        // TODO 横向きにすると音が止まる
-        //voiceTalker.speak("もくてきちまであとよんひゃくじゅういちめーとるです");
-        //voiceTalker.speak("げんざいちはとうきょうといたばしくみなみときわだいです");
-        
-        ReverseGeocoding geo = new ReverseGeocoding(this);
-        geo.execute("139.68867458", "35.75514038");
-    }
-    
     /**
-     * 逆ジオコーディングのコールバック
-     * @param text ひらがな表記の住所
+     * 縦横切替時イベントのコールバック
+     * AndroidManifest.xmlの<activity>タグにandroid:configChanges="orientation|screenSize"
+     * を指定すると切替時にActivityの再起動をキャンセルできる
      */
-    public void onConvertAddress(String text) {
-        voiceTalker.speak("げんざいちは" + text + "ですう");
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
     }
 }

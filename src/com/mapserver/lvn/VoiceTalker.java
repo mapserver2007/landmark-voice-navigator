@@ -23,14 +23,16 @@ public class VoiceTalker implements AudioTrack.OnPlaybackPositionUpdateListener 
     private static final int SPACER = 2000;
     /** サンプリングレート */
     private static final int SAMPLING_RATE = 8000;
-    
     /** コンテキスト */
     private Context context;
+    /** バッファサイズ */
     private int bufferSize;
     /** オーディオデータ */
     private AudioTrack track;
     /** Aquestalkオブジェクト */
     private AquesTalk2 aquestalk;
+    /** 自動発話 */
+    private boolean isAutoSpeak = false;
     
     /**
      * コンストラクタ
@@ -38,6 +40,14 @@ public class VoiceTalker implements AudioTrack.OnPlaybackPositionUpdateListener 
     public VoiceTalker(Context context) {
         this.context = context;
         audioTrack();
+    }
+    
+    /**
+     * 自動発話フラグを設定
+     * @param isAutoSpeak 自動発話フラグ
+     */
+    public void setAutoSpeak(boolean isAutoSpeak) {
+        this.isAutoSpeak = isAutoSpeak;
     }
     
     /**
@@ -60,6 +70,16 @@ public class VoiceTalker implements AudioTrack.OnPlaybackPositionUpdateListener 
     }
     
     /**
+     * 音声を再生する(自動発話)
+     * @param text 再生する文字列(ひらがなのみ)
+     */
+    public void autoSpeak(String text) {
+        if (this.isAutoSpeak) {
+            speak(text);
+        }
+    }
+    
+    /**
      * 音声を再生する
      * @param text 再生する文字列(ひらがなのみ)
      */
@@ -70,7 +90,7 @@ public class VoiceTalker implements AudioTrack.OnPlaybackPositionUpdateListener 
         // 長さ1の場合エラーコードが先頭に含まれている
         if (wav.length == 1) {
             Log.d("lvn", "AquesTalk2 Synthe Error: " + wav[0]);
-            Toast.makeText(context, "音声テキストはひらがなのみ受け付けます" + wav[0], Toast.LENGTH_LONG).show();
+            Toast.makeText(context, "おはなしできないお(´；ω；`)", Toast.LENGTH_LONG).show();
         }
         else {
             // 音声出力

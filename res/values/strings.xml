@@ -3,7 +3,8 @@
 
     <string name="app_name">landmark-voice-navigator</string>
     <string name="action_settings">Settings</string>
-    <string name="hello_world">みかしーオワタ(´；ω；`)</string>
+    <string name="hello_world">【開発中】(´・ω・)(｀・ω・´)(・ω・｀)【バグ】</string>
     <string name="button_speak">speak!</string>
+    <string name="checkbox_autospeak">Auto speaking</string>
 
 </resources>

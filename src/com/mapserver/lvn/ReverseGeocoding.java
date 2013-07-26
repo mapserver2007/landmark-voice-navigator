@@ -21,9 +21,17 @@ import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.TextView;
 
+/**
+ * 逆ジオコーディングクラス
+ * @author Ryuichi Tanaka
+ * @since 0.0.1
+ */
 public class ReverseGeocoding extends AsyncTask<String, Void, String> {
     /** UserAgent */
     private static final String UA = "Mozilla/5.0 (Linux; U; Android 4.0.1; ja-jp; Galaxy Nexus Build/ITL41D) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
+    /** ステータス */
+    private static final String STATUS_STAY = "stay";
+    private static final String STATUS_MOVED = "moved";
     /** View */
     private Activity activity;
     
@@ -48,6 +56,12 @@ public class ReverseGeocoding extends AsyncTask<String, Void, String> {
      * @param lat 緯度
      */
     protected void execute(double lng, double lat) {
+        // 前回取得した住所を取得
+        TextView elemAddress = (TextView) activity.findViewById(R.id.showAddress);
+        TextView elemAddressHiragana = (TextView) activity.findViewById(R.id.showAddressHiragana);
+        this.address = elemAddress.getText().toString();
+        this.addressHiragana = elemAddressHiragana.getText().toString();
+        // 変換処理実行
         execute(String.valueOf(lng), String.valueOf(lat));
     }
     
@@ -57,6 +71,7 @@ public class ReverseGeocoding extends AsyncTask<String, Void, String> {
      * @return 住所
      */
     private String getAddress(String lng, String lat) {
+        Log.d("lvn", "Converting position to address");
         Uri.Builder builder = new Uri.Builder();
         builder.scheme("http")
                .encodedAuthority("reverse.search.olp.yahooapis.jp")
@@ -108,6 +123,7 @@ public class ReverseGeocoding extends AsyncTask<String, Void, String> {
      * @throws IOException
      */
     private String getAddressHiragana(String text) throws IOException {
+        Log.d("lvn", "Converting address to address of hiragana");
         Uri.Builder builder = new Uri.Builder();
         builder.scheme("http")
                .encodedAuthority("jlp.yahooapis.jp")
@@ -180,7 +196,12 @@ public class ReverseGeocoding extends AsyncTask<String, Void, String> {
     protected String doInBackground(String... query) {
         try {
             // 住所を取得
-            address = getAddress(query[0], query[1]);
+            String address = getAddress(query[0], query[1]);
+            // 住所が変わっていなければひらがな変換は実行しない
+            if (address != null && address.equals(this.address)) {
+                return STATUS_STAY;
+            }
+            this.address = address;
             // ひらがなに変換
             addressHiragana = getAddressHiragana(address);
         }
@@ -188,12 +209,16 @@ public class ReverseGeocoding extends AsyncTask<String, Void, String> {
             Log.e("lvn", e.getMessage());
         }
         
-        return addressHiragana;
+        return STATUS_MOVED;
     }
     
     @Override
-    protected void onPostExecute(String result) {
-        showResult(R.id.showAddress, address);
-        showResult(R.id.showAddressHiragana, addressHiragana);
+    protected void onPostExecute(String status) {
+        showResult(R.id.showStatus, STATUS_STAY);
+        if (STATUS_MOVED.equals(status)) {
+            showResult(R.id.showAddress, address);
+            showResult(R.id.showAddressHiragana, addressHiragana);
+            ((MainActivity) activity).onAutoSpeak(addressHiragana);
+        }
     }
 }

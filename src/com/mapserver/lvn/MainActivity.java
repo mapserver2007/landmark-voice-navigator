@@ -3,7 +3,6 @@ package com.mapserver.lvn;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.CheckBox;
@@ -37,14 +36,8 @@ public class MainActivity extends Activity {
      * @param location 位置情報
      */
     public void onLocationChanged(LocationBean location) {
-        String prevSpeakText = getSpeakText();
-        // デバッグ
-        ReverseGeocoding geo = new ReverseGeocoding(this);
-        geo.execute(location.getLng(), location.getLat());
-        // 自動発話
-        if (prevSpeakText != getSpeakText()) {
-            voiceTalker.autoSpeak("げんざいちわ" + getSpeakText() + "ですう");
-        }
+        ReverseGeocoding geocoding = new ReverseGeocoding(this);
+        geocoding.execute(location.getLng(), location.getLat());
     }
     
     /**
@@ -58,19 +51,20 @@ public class MainActivity extends Activity {
     
     /**
      * しゃべります
+     * speakボタンのコールバック
      * @param view ビューオブジェクト
      */
     public void onSpeak(View view) {
-        voiceTalker.speak("げんざいちわ" + getSpeakText() + "ですう");
+        TextView textView = (TextView) findViewById(R.id.showAddressHiragana);
+        voiceTalker.speak("げんざいちわ" + textView.getText().toString() + "ですう");
     }
     
     /**
-     * 発話するテキストを取得する
-     * @return 発話テキスト
+     * 自動でしゃべります
+     * @param text テキスト
      */
-    private String getSpeakText() {
-        TextView textView = (TextView) findViewById(R.id.showAddressHiragana);
-        return textView.getText().toString();
+    public void onAutoSpeak(String text) {
+        voiceTalker.autoSpeak("げんざいちわ" + text + "ですう");
     }
     
     @Override

@@ -85,7 +85,7 @@ public class VoiceTalker implements AudioTrack.OnPlaybackPositionUpdateListener 
      */
     public void speak(String text) {
         // 音声合成
-        byte[] wav = aquestalk.syntheWav(text, 100, loadPhont());
+        byte[] wav = aquestalk.syntheWav(text, 90, loadPhont());
         // エラーかどうか判定
         // 長さ1の場合エラーコードが先頭に含まれている
         if (wav.length == 1) {

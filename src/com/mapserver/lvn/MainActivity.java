@@ -36,6 +36,11 @@ public class MainActivity extends Activity {
      * @param location 位置情報
      */
     public void onLocationChanged(LocationBean location) {
+        TextView lng = (TextView) findViewById(R.id.showLongitude),
+                 lat = (TextView) findViewById(R.id.showLatitude);
+        lng.setText(String.valueOf(location.getLng()));
+        lat.setText(String.valueOf(location.getLat()));
+        
         ReverseGeocoding geocoding = new ReverseGeocoding(this);
         geocoding.execute(location.getLng(), location.getLat());
     }

@@ -149,11 +149,12 @@ public class ReverseGeocoding extends AsyncTask<String, Void, String> {
             factory.setNamespaceAware(true);
             XmlPullParser xpp = factory.newPullParser();
             xpp.setInput(is, "UTF-8");
-            
             int eventType = xpp.getEventType();
+            
             while (eventType != XmlPullParser.END_DOCUMENT) {
                 // 対象のタグを見つけたとき
-                if (eventType == XmlPullParser.START_TAG && "Furigana".equals(xpp.getName())) {
+                if (eventType == XmlPullParser.START_TAG && 
+                        xpp.getDepth() == 5 && "Furigana".equals(xpp.getName())) {
                     // 要素を取得
                     if (xpp.next() == XmlPullParser.TEXT) {
                         sb.append(xpp.getText());
@@ -169,7 +170,9 @@ public class ReverseGeocoding extends AsyncTask<String, Void, String> {
             Log.d("lvn", e.getMessage());
         }
         catch (XmlPullParserException e) {
-            Log.d("lvn", "owata");
+            Log.d("lvn", e.getMessage());
+        }
+        catch (Exception e) {
             Log.d("lvn", e.getMessage());
         }
         finally {

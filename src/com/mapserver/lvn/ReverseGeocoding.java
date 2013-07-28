@@ -15,11 +15,10 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
-import android.app.Activity;
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.TextView;
 
 /**
  * 逆ジオコーディングクラス
@@ -32,51 +31,42 @@ public class ReverseGeocoding extends AsyncTask<String, Void, String> {
     /** ステータス */
     private static final String STATUS_STAY = "stay";
     private static final String STATUS_MOVED = "moved";
-    /** View */
-    private Activity activity;
-    
-    private String appid;
-    
-    private String address;
-    private String addressHiragana;
+    /** コンテキスト */
+    private Context context;
+    /** コンテナ */
+    private ReverseGeocodingContainer container;
     
     /**
      * コンストラクタ
-     * @param lng 経度
-     * @param lat 緯度
+     * @param context コンテキスト
+     * @param container コンテナ
      */
-    public ReverseGeocoding(Activity activity) {
-        appid = "";
-        this.activity = activity;
+    public ReverseGeocoding(Context context, ReverseGeocodingContainer container) {
+        this.context = context;
+        this.container = container;
     }
     
-    /**
-     * 緯度経度をdouble型で指定して実行する
-     * @param lng 経度
-     * @param lat 緯度
-     */
-    protected void execute(double lng, double lat) {
-        // 前回取得した住所を取得
-        TextView elemAddress = (TextView) activity.findViewById(R.id.showAddress);
-        TextView elemAddressHiragana = (TextView) activity.findViewById(R.id.showAddressHiragana);
-        this.address = elemAddress.getText().toString();
-        this.addressHiragana = elemAddressHiragana.getText().toString();
-        // 変換処理実行
-        execute(String.valueOf(lng), String.valueOf(lat));
-    }
+//    /**
+//     * 逆ジオコーディングを実行する
+//     */
+//    protected void execute(String lng, String lat) {
+//        execute(String.valueOf(lng), String.valueOf(lat));
+//    }
     
     /**
      * 住所を取得する
-     * @param String リクエストパラメータ
-     * @return 住所
+     * @param appId APPキー
+     * @param lng 経度
+     * @param lat 緯度
+     * @return
      */
-    private String getAddress(String lng, String lat) {
+    private String getAddress(String appId, String lng, String lat) {
         Log.d("lvn", "Converting position to address");
         Uri.Builder builder = new Uri.Builder();
         builder.scheme("http")
                .encodedAuthority("reverse.search.olp.yahooapis.jp")
                .path("OpenLocalPlatform/V1/reverseGeoCoder")
-               .appendQueryParameter("appid", appid)
+               .appendQueryParameter("appid", appId)
                .appendQueryParameter("lat", lat)
                .appendQueryParameter("lon", lng)
                .appendQueryParameter("output", "json");
@@ -118,18 +108,19 @@ public class ReverseGeocoding extends AsyncTask<String, Void, String> {
     
     /**
      * 漢字表記の住所をひらがなに変換する
-     * @param text 漢字を含む住所
-     * @return ひらがな(ただし町名以降の丁目は含まない)
+     * @param appId APPキー
+     * @param address 住所
+     * @return 住所ひらがな
      * @throws IOException
      */
-    private String getAddressHiragana(String text) throws IOException {
+    private String getAddressHiragana(String appId, String address) throws IOException {
         Log.d("lvn", "Converting address to address of hiragana");
         Uri.Builder builder = new Uri.Builder();
         builder.scheme("http")
                .encodedAuthority("jlp.yahooapis.jp")
                .path("FuriganaService/V1/furigana")
-               .appendQueryParameter("appid", appid)
-               .appendQueryParameter("sentence", text)
+               .appendQueryParameter("appid", appId)
+               .appendQueryParameter("sentence", address)
                .appendQueryParameter("grade", "1");
         
         HttpGet request = new HttpGet(builder.build().toString());
@@ -182,31 +173,22 @@ public class ReverseGeocoding extends AsyncTask<String, Void, String> {
         
         return sb.toString();
     }
-    
-    /**
-     * Activityに結果を表示する
-     * @param id 要素ID
-     * @param text 表示するテキスト
-     */
-    private void showResult(int id, String text) {
-        if (activity != null) {
-            TextView elem = (TextView) activity.findViewById(id);
-            elem.setText(text);
-        }
-    }
-
     @Override
     protected String doInBackground(String... query) {
+        String lng = query[0],
+               lat = query[1],
+               appId = container.getAppId();
         try {
             // 住所を取得
-            String address = getAddress(query[0], query[1]);
+            String address = getAddress(appId, lng, lat);
             // 住所が変わっていなければひらがな変換は実行しない
-            if (address != null && address.equals(this.address)) {
+            if (address != null && address.equals(container.getAddress())) {
                 return STATUS_STAY;
             }
-            this.address = address;
+            container.setAddress(address);
             // ひらがなに変換
-            addressHiragana = getAddressHiragana(address);
+            String addressHiragana = getAddressHiragana(appId, address);
+            container.setAddressHiragana(addressHiragana);
         }
         catch (IOException e) {
             Log.e("lvn", e.getMessage());
@@ -217,11 +199,8 @@ public class ReverseGeocoding extends AsyncTask<String, Void, String> {
     
     @Override
     protected void onPostExecute(String status) {
-        showResult(R.id.showStatus, STATUS_STAY);
         if (STATUS_MOVED.equals(status)) {
-            showResult(R.id.showAddress, address);
-            showResult(R.id.showAddressHiragana, addressHiragana);
-            ((MainActivity) activity).onAutoSpeak(addressHiragana);
+            ((MainActivity) context).onAutoSpeak(container);
         }
     }
 }

@@ -1,6 +1,8 @@
 package com.mapserver.lvn;
 
 import android.app.Activity;
+import android.content.Context;
+import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -11,15 +13,15 @@ import android.os.Bundle;
  * @author Ryuichi Tanaka
  * @since 0.0.1
  */
-public class LocationController implements LocationListener {
+public class LocationController implements LocationListener, GpsStatus.Listener {
     /** ロケーションマネージャ */
     private LocationManager manager;
-    /** View */
-    private Activity activity;
+    /** コンテキスト */
+    private Context context;
     
-    public LocationController(Activity activity) {
-        this.activity = activity;
-        manager = (LocationManager) activity.getSystemService(Activity.LOCATION_SERVICE);
+    public LocationController(Context context) {
+        this.context = context;
+        manager = (LocationManager) context.getSystemService(Activity.LOCATION_SERVICE);
         update();
     }
     
@@ -29,6 +31,7 @@ public class LocationController implements LocationListener {
     
     public void remove() {
         manager.removeUpdates(this);
+        manager.removeGpsStatusListener(this);
     }
 
     /**
@@ -37,14 +40,15 @@ public class LocationController implements LocationListener {
      */
     @Override
     public void onLocationChanged(Location location) {
-        if (activity == null) {
+        if (context == null) {
             return;
         }
-        LocationBean bean = new LocationBean();
-        bean.setLng(location.getLongitude());
-        bean.setLat(location.getLatitude());
+        LocationContainer bean = new LocationContainer();
+        bean.setLongitude(location.getLongitude());
+        bean.setLatitude(location.getLatitude());
+        
         // Activityに取得した位置情報を返す
-        ((MainActivity) activity).onLocationChanged(bean);
+        ((MainActivity) context).onLocationChanged(bean);
     }
 
     @Override
@@ -62,5 +66,27 @@ public class LocationController implements LocationListener {
     @Override
     public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
         // TODO 自動生成されたメソッド・スタブ
+    }
+
+    @Override
+    public void onGpsStatusChanged(int status) {
+        String statusText = "initialize";
+        switch (status) {
+        case GpsStatus.GPS_EVENT_FIRST_FIX:
+            statusText = "first fix";
+            break;
+        case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
+            statusText = "satellite status";
+            break;
+        case GpsStatus.GPS_EVENT_STARTED:
+            statusText = "started";
+            break;
+            
+        case GpsStatus.GPS_EVENT_STOPPED:
+            statusText = "stopped";
+            break;
+        }
+        
+        ((MainActivity) context).onGpsStatusChanged(statusText);
     }
 }

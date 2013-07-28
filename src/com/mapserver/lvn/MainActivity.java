@@ -35,14 +35,24 @@ public class MainActivity extends Activity {
      * 位置情報が変化したときの処理
      * @param location 位置情報
      */
-    public void onLocationChanged(LocationBean location) {
-        TextView lng = (TextView) findViewById(R.id.showLongitude),
-                 lat = (TextView) findViewById(R.id.showLatitude);
-        lng.setText(String.valueOf(location.getLng()));
-        lat.setText(String.valueOf(location.getLat()));
+    public void onLocationChanged(LocationContainer location) {
+        TextView address = (TextView) findViewById(R.id.showAddress),
+                 addressHiragana = (TextView) findViewById(R.id.showAddressHiragana);
         
-        ReverseGeocoding geocoding = new ReverseGeocoding(this);
-        geocoding.execute(location.getLng(), location.getLat());
+        String longitude = location.getLongitude().toString(),
+               latitude = location.getLatitude().toString();
+        
+        updateText(R.id.showLongitude, longitude);
+        updateText(R.id.showLatitude, latitude);
+        
+        ReverseGeocodingContainer container = new ReverseGeocodingContainer();
+        String appId = "";
+        container.setAppId(appId);
+        container.setAddress(address.getText().toString());
+        container.setAddressHiragana(addressHiragana.getText().toString());
+        
+        ReverseGeocoding geocoding = new ReverseGeocoding(this, container);
+        geocoding.execute(longitude, latitude);
     }
     
     /**
@@ -68,8 +78,28 @@ public class MainActivity extends Activity {
      * 自動でしゃべります
      * @param text テキスト
      */
-    public void onAutoSpeak(String text) {
-        voiceTalker.autoSpeak("げんざいちわ" + text + "ですう");
+    public void onAutoSpeak(ReverseGeocodingContainer container) {
+        updateText(R.id.showAddress, container.getAddress());
+        updateText(R.id.showAddressHiragana, container.getAddressHiragana());
+        voiceTalker.autoSpeak("げんざいちわ" + container.getAddressHiragana() + "ですう");
+    }
+    
+    /**
+     * GPSステータスを受け取る
+     * @param status GPSステータス
+     */
+    public void onGpsStatusChanged(String status) {
+        updateText(R.id.showGpsStatus, status);
+    }
+    
+    /**
+     * ビューの表示内容を更新
+     * @param id 要素ID
+     * @param text 表示文字列
+     */
+    public void updateText(int id, String text) {
+        TextView textView = (TextView) findViewById(id);
+        textView.setText(text);
     }
     
     @Override

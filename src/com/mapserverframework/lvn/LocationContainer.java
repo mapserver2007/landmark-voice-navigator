@@ -1,4 +1,4 @@
-package com.mapserver.lvn;
+package com.mapserverframework.lvn;
 
 /**
  * 位置情報を格納するBeanクラス
@@ -10,6 +10,8 @@ public class LocationContainer {
     private Double longitude;
     /** 緯度 */
     private Double latitude;
+    /** 移動速度 */
+    private Float speed;
     
     /**
      * 経度を返却する
@@ -41,5 +43,21 @@ public class LocationContainer {
      */
     public void setLatitude(Double latitude) {
         this.latitude = latitude;
+    }
+    
+    /**
+     * 移動速度を返却する
+     * @return 移動速度
+     */
+    public Float getSpeed() {
+        return speed;
+    }
+    
+    /**
+     * 移動速度を設定する
+     * @param speed 移動速度
+     */
+    public void setSpeed(Float speed) {
+        this.speed = speed;
     }
 }

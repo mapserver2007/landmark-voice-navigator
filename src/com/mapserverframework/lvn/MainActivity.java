@@ -1,4 +1,4 @@
-package com.mapserver.lvn;
+package com.mapserverframework.lvn;
 
 import android.app.Activity;
 import android.content.res.Configuration;
@@ -40,10 +40,12 @@ public class MainActivity extends Activity {
                  addressHiragana = (TextView) findViewById(R.id.showAddressHiragana);
         
         String longitude = location.getLongitude().toString(),
-               latitude = location.getLatitude().toString();
+               latitude = location.getLatitude().toString(),
+               speed = location.getSpeed().toString();
         
         updateText(R.id.showLongitude, longitude);
         updateText(R.id.showLatitude, latitude);
+        updateText(R.id.showSpeed, speed + " km/h");
         
         ReverseGeocodingContainer container = new ReverseGeocodingContainer();
         String appId = "";

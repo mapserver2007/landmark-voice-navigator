@@ -1,6 +1,5 @@
-package com.mapserver.lvn;
+package com.mapserverframework.lvn;
 
-import android.app.Activity;
 import android.content.Context;
 import android.location.GpsStatus;
 import android.location.Location;
@@ -19,16 +18,27 @@ public class LocationController implements LocationListener, GpsStatus.Listener 
     /** コンテキスト */
     private Context context;
     
+    /**
+     * コンストラクタ
+     * @param context コンテキスト
+     */
     public LocationController(Context context) {
         this.context = context;
-        manager = (LocationManager) context.getSystemService(Activity.LOCATION_SERVICE);
+        manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        manager.addGpsStatusListener(this);
         update();
     }
     
+    /**
+     * GPSロケーションを開始
+     */
     public void update() {
         manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 0, this);
     }
     
+    /**
+     * GPSロケーションを削除
+     */
     public void remove() {
         manager.removeUpdates(this);
         manager.removeGpsStatusListener(this);
@@ -46,6 +56,9 @@ public class LocationController implements LocationListener, GpsStatus.Listener 
         LocationContainer bean = new LocationContainer();
         bean.setLongitude(location.getLongitude());
         bean.setLatitude(location.getLatitude());
+        
+        float speed = location.getSpeed() * 60 * 24 / 1000;
+        bean.setSpeed(speed);
         
         // Activityに取得した位置情報を返す
         ((MainActivity) context).onLocationChanged(bean);
@@ -73,15 +86,14 @@ public class LocationController implements LocationListener, GpsStatus.Listener 
         String statusText = "initialize";
         switch (status) {
         case GpsStatus.GPS_EVENT_FIRST_FIX:
-            statusText = "first fix";
+            statusText = "received";
             break;
         case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
-            statusText = "satellite status";
+            statusText = "running";
             break;
         case GpsStatus.GPS_EVENT_STARTED:
             statusText = "started";
             break;
-            
         case GpsStatus.GPS_EVENT_STOPPED:
             statusText = "stopped";
             break;

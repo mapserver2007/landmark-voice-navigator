@@ -1,4 +1,4 @@
-package com.mapserver.lvn;
+package com.mapserverframework.lvn;
 
 import java.io.IOException;
 import java.io.InputStream;
